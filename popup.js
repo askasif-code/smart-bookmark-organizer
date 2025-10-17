@@ -1,344 +1,205 @@
-// Smart Bookmark Organizer - Popup Script
-console.log('Smart Bookmarks: Popup initialized');
+// Smart Bookmark Organizer - Popup Script (FIXED VERSION)
+console.log('Popup script loading...');
 
-// Wait for DOM to load
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log('DOM loaded, initializing...');
-  
-  // Get current tab information
-  await loadCurrentPage();
-  
-  // Load saved bookmarks
-  await loadBookmarks();
-  
-  // Setup event listeners
-  setupEventListeners();
-  
-  // Load custom folders
-  await loadFolders();
-  
-  console.log('Initialization complete!');
+// Wait for DOM
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM loaded');
+  init();
 });
 
+// Initialize
+function init() {
+  loadCurrentPage();
+  loadBookmarks();
+  setupEventListeners();
+  loadFolders();
+}
+
 // Load current page info
-async function loadCurrentPage() {
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    
-    if (tab) {
-      // Update page title
-      const pageTitle = document.getElementById('page-title');
-      pageTitle.textContent = tab.title || 'Untitled Page';
-      pageTitle.title = tab.title; // Tooltip for long titles
+function loadCurrentPage() {
+  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+    if (tabs && tabs[0]) {
+      const tab = tabs[0];
       
-      // Update page URL
-      const pageUrl = document.getElementById('page-url');
-      pageUrl.textContent = tab.url || '';
-      pageUrl.title = tab.url; // Tooltip
+      // Update title
+      document.getElementById('page-title').textContent = tab.title || 'Untitled';
       
-      // Detect and display category
+      // Update URL
+      document.getElementById('page-url').textContent = tab.url || '';
+      
+      // Detect category
       const category = detectCategory(tab.url);
       updateCategoryBadge(category);
       
-      // Auto-select category in dropdown
-      document.getElementById('category-select').value = category;
-      
-      console.log('Current page loaded:', {
-        title: tab.title,
-        url: tab.url,
-        category: category
-      });
+      console.log('Page loaded:', tab.title, category);
     }
-  } catch (error) {
-    console.error('Error loading current page:', error);
-  }
+  });
 }
 
-// Detect content category from URL (ENHANCED VERSION)
+// Detect category - SIMPLE VERSION
 function detectCategory(url) {
   if (!url) return 'text';
   
-  // === VIDEO PATTERNS === (YouTube, Instagram Reels, TikTok, etc.)
-  const videoPatterns = [
-    // YouTube
-    /youtube\.com\/watch/i,
-    /youtu\.be\//i,
-    
-    // Instagram Videos
-    /instagram\.com\/reel\//i,
-    /instagram\.com\/tv\//i,
-    
-    // TikTok
-    /tiktok\.com\/@[\w.-]+\/video/i,
-    
-    // Facebook
-    /facebook\.com\/watch/i,
-    /fb\.watch\//i,
-    
-    // Vimeo
-    /vimeo\.com\/\d+/i,
-    
-    // Twitch
-    /twitch\.tv\/videos/i,
-    /twitch\.tv\/\w+$/i,
-    
-    // Others
-    /dailymotion\.com\/video/i
-  ];
+  const u = url.toLowerCase();
   
-  // === AUDIO PATTERNS === (Spotify, SoundCloud, Podcasts)
-  const audioPatterns = [
-    /spotify\.com\/track/i,
-    /spotify\.com\/episode/i,
-    /spotify\.com\/playlist/i,
-    /soundcloud\.com\/[\w-]+\/[\w-]+/i,
-    /apple\.com.*podcast/i,
-    /anchor\.fm/i
-  ];
-  
-  // === IMAGE PATTERNS === (Instagram Posts, Pinterest, Image Sites)
-  const imagePatterns = [
-    // Instagram Images/Posts
-    /instagram\.com\/p\//i,
-    
-    // Pinterest
-    /pinterest\.com\/pin/i,
-    
-    // Stock Photo Sites
-    /unsplash\.com\/photos/i,
-    /pexels\.com\/photo/i,
-    /flickr\.com\/photos/i,
-    
-    // Design Portfolios
-    /behance\.net\/gallery/i,
-    /dribbble\.com\/shots/i
-  ];
-  
-  // === TEXT PATTERNS === (Blogs, Articles, Social Media Text)
-  const textPatterns = [
-    /medium\.com\/@[\w-]+\//i,
-    /substack\.com\/p\//i,
-    /reddit\.com\/r\/[\w]+\/comments/i,
-    /twitter\.com\/[\w]+\/status/i,
-    /x\.com\/[\w]+\/status/i,
-    /linkedin\.com\/pulse/i
-  ];
-  
-  // Check video
-  for (const pattern of videoPatterns) {
-    if (pattern.test(url)) {
-      console.log('🎥 Video detected:', url);
-      return 'video';
-    }
+  // Video
+  if (u.includes('youtube.com/watch') || u.includes('youtu.be') || 
+      u.includes('instagram.com/reel') || u.includes('tiktok.com')) {
+    return 'video';
   }
   
-  // Check audio
-  for (const pattern of audioPatterns) {
-    if (pattern.test(url)) {
-      console.log('🎵 Audio detected:', url);
-      return 'audio';
-    }
+  // Image
+  if (u.includes('instagram.com/p/') || u.includes('pinterest.com')) {
+    return 'image';
   }
   
-  // Check image
-  for (const pattern of imagePatterns) {
-    if (pattern.test(url)) {
-      console.log('🖼️ Image detected:', url);
-      return 'image';
-    }
+  // Audio
+  if (u.includes('spotify.com') || u.includes('soundcloud.com')) {
+    return 'audio';
   }
   
-  // Check text
-  for (const pattern of textPatterns) {
-    if (pattern.test(url)) {
-      console.log('📝 Text detected:', url);
-      return 'text';
-    }
-  }
-  
-  // Default to text
-  console.log('📄 Default (text) for:', url);
   return 'text';
 }
 
+// Update badge
+function updateCategoryBadge(category) {
+  const badge = document.getElementById('category-badge');
+  
+  if (category === 'video') {
+    badge.textContent = '🎥 Video';
+    badge.style.background = '#e53e3e';
+  } else if (category === 'image') {
+    badge.textContent = '🖼️ Image';
+    badge.style.background = '#ed8936';
+  } else if (category === 'audio') {
+    badge.textContent = '🎵 Audio';
+    badge.style.background = '#38b2ac';
+  } else {
+    badge.textContent = '📝 Text';
+    badge.style.background = '#4299e1';
+  }
+}
 
-// Save bookmark function
-async function saveBookmark() {
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+// Setup event listeners
+function setupEventListeners() {
+  // Save button
+  document.getElementById('save-btn').addEventListener('click', saveBookmark);
+  
+  // Settings
+  document.getElementById('settings-btn').addEventListener('click', function() {
+    alert('Settings coming soon!');
+  });
+  
+  // Add folder
+  document.getElementById('add-folder-btn').addEventListener('click', addNewFolder);
+  
+  // Search
+  document.getElementById('search-box').addEventListener('input', function(e) {
+    searchBookmarks(e.target.value);
+  });
+}
+
+// Save bookmark
+function saveBookmark() {
+  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+    if (!tabs || !tabs[0]) return;
     
-    if (!tab) {
-      showNotification('❌ No active tab found', 'error');
-      return;
-    }
-    
-    // Get form values
-    const categorySelect = document.getElementById('category-select').value;
+    const tab = tabs[0];
+    const category = document.getElementById('category-select').value;
     const folder = document.getElementById('folder-select').value;
-    const tagsInput = document.getElementById('tags-input').value;
+    const tags = document.getElementById('tags-input').value;
     
-    // Detect category if auto
-    const finalCategory = categorySelect === 'auto' ? detectCategory(tab.url) : categorySelect;
-    
-    // Parse tags
-    const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
-    
-    // Create bookmark object
     const bookmark = {
-      id: `bm-${Date.now()}`,
+      id: 'bm-' + Date.now(),
       url: tab.url,
       title: tab.title,
-      category: finalCategory,
+      category: category === 'auto' ? detectCategory(tab.url) : category,
       folder: folder,
-      tags: tags,
+      tags: tags ? tags.split(',').map(t => t.trim()) : [],
       timestamp: Date.now(),
-      favicon: tab.favIconUrl || '',
       platform: getPlatform(tab.url)
     };
     
     // Get existing bookmarks
-    const result = await chrome.storage.local.get(['bookmarks']);
-    const bookmarks = result.bookmarks || [];
-    
-    // Add new bookmark
-    bookmarks.unshift(bookmark);
-    
-    // Save to storage
-    await chrome.storage.local.set({ bookmarks: bookmarks });
-    
-    // Update UI
-    await loadBookmarks();
-    
-    // Clear tags input
-    document.getElementById('tags-input').value = '';
-    
-    // Show success notification
-    showNotification('✅ Bookmark saved successfully!', 'success');
-    
-    console.log('Bookmark saved:', bookmark);
-    
-  } catch (error) {
-    console.error('Error saving bookmark:', error);
-    showNotification('❌ Error saving bookmark', 'error');
-  }
+    chrome.storage.local.get(['bookmarks'], function(result) {
+      const bookmarks = result.bookmarks || [];
+      bookmarks.unshift(bookmark);
+      
+      // Save
+      chrome.storage.local.set({ bookmarks: bookmarks }, function() {
+        alert('✅ Bookmark saved!');
+        loadBookmarks();
+        document.getElementById('tags-input').value = '';
+      });
+    });
+  });
 }
 
-// Get platform name from URL (ENHANCED)
+// Get platform
 function getPlatform(url) {
   if (!url) return 'Web';
-  
-  const platforms = {
-    // Social Media
-    'youtube.com': 'YouTube',
-    'youtu.be': 'YouTube',
-    'instagram.com': 'Instagram',
-    'twitter.com': 'Twitter',
-    'x.com': 'Twitter',
-    'tiktok.com': 'TikTok',
-    'facebook.com': 'Facebook',
-    'fb.watch': 'Facebook',
-    'linkedin.com': 'LinkedIn',
-    
-    // Content Platforms
-    'reddit.com': 'Reddit',
-    'medium.com': 'Medium',
-    'substack.com': 'Substack',
-    'dev.to': 'Dev.to',
-    
-    // Media
-    'spotify.com': 'Spotify',
-    'soundcloud.com': 'SoundCloud',
-    'vimeo.com': 'Vimeo',
-    'twitch.tv': 'Twitch',
-    'dailymotion.com': 'Dailymotion',
-    
-    // Design & Images
-    'pinterest.com': 'Pinterest',
-    'unsplash.com': 'Unsplash',
-    'pexels.com': 'Pexels',
-    'behance.net': 'Behance',
-    'dribbble.com': 'Dribbble'
-  };
-  
-  for (const [domain, name] of Object.entries(platforms)) {
-    if (url.includes(domain)) {
-      console.log(`🌐 Platform detected: ${name}`);
-      return name;
-    }
-  }
-  
+  if (url.includes('youtube.com')) return 'YouTube';
+  if (url.includes('instagram.com')) return 'Instagram';
+  if (url.includes('tiktok.com')) return 'TikTok';
+  if (url.includes('twitter.com')) return 'Twitter';
+  if (url.includes('spotify.com')) return 'Spotify';
   return 'Web';
 }
 
-
-// Load and display bookmarks
-async function loadBookmarks() {
-  try {
-    const result = await chrome.storage.local.get(['bookmarks']);
+// Load bookmarks
+function loadBookmarks() {
+  chrome.storage.local.get(['bookmarks'], function(result) {
     const bookmarks = result.bookmarks || [];
-    
     const listContainer = document.getElementById('bookmarks-list');
     
     // Update count
     document.getElementById('total-count').textContent = bookmarks.length;
     
-    // Show empty state if no bookmarks
     if (bookmarks.length === 0) {
-      listContainer.innerHTML = '<p class="empty-state">No bookmarks yet. Save your first one! 🎉</p>';
+      listContainer.innerHTML = '<p class="empty-state">No bookmarks yet 🎉</p>';
       return;
     }
     
-    // Display recent bookmarks (last 5)
-    const recentBookmarks = bookmarks.slice(0, 5);
+    // Show recent 5
+    const recent = bookmarks.slice(0, 5);
     
-    listContainer.innerHTML = recentBookmarks.map(bookmark => `
-      <div class="bookmark-item" data-url="${bookmark.url}" title="Click to open">
-        <div class="bookmark-icon">${getCategoryIcon(bookmark.category)}</div>
+    listContainer.innerHTML = recent.map(bm => `
+      <div class="bookmark-item" data-url="${bm.url}">
+        <div class="bookmark-icon">${getCategoryIcon(bm.category)}</div>
         <div class="bookmark-info">
-          <div class="bookmark-title">${escapeHtml(bookmark.title)}</div>
-          <div class="bookmark-meta">
-            ${bookmark.platform} • ${getTimeAgo(bookmark.timestamp)} • ${bookmark.folder}
-          </div>
+          <div class="bookmark-title">${escapeHtml(bm.title)}</div>
+          <div class="bookmark-meta">${bm.platform} • ${getTimeAgo(bm.timestamp)}</div>
         </div>
       </div>
     `).join('');
     
-    // Add click listeners to bookmarks
-    listContainer.querySelectorAll('.bookmark-item').forEach(item => {
-      item.addEventListener('click', () => {
-        chrome.tabs.create({ url: item.dataset.url });
+    // Add click listeners
+    document.querySelectorAll('.bookmark-item').forEach(item => {
+      item.addEventListener('click', function() {
+        chrome.tabs.create({ url: this.dataset.url });
       });
     });
-    
-    console.log(`Loaded ${bookmarks.length} bookmarks`);
-    
-  } catch (error) {
-    console.error('Error loading bookmarks:', error);
-  }
+  });
 }
 
 // Get category icon
 function getCategoryIcon(category) {
-  const icons = {
-    video: '🎥',
-    audio: '🎵',
-    image: '🖼️',
-    text: '📝'
-  };
-  return icons[category] || '📄';
+  if (category === 'video') return '🎥';
+  if (category === 'image') return '🖼️';
+  if (category === 'audio') return '🎵';
+  return '📝';
 }
 
-// Get time ago string
+// Time ago
 function getTimeAgo(timestamp) {
   const seconds = Math.floor((Date.now() - timestamp) / 1000);
-  
   if (seconds < 60) return 'Just now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  return `${Math.floor(seconds / 86400)}d ago`;
+  if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+  if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+  return Math.floor(seconds / 86400) + 'd ago';
 }
 
-// Escape HTML to prevent XSS
+// Escape HTML
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
@@ -346,130 +207,79 @@ function escapeHtml(text) {
 }
 
 // Add new folder
-async function addNewFolder() {
-  const folderName = prompt('📁 Enter new folder name:');
+function addNewFolder() {
+  const name = prompt('Enter folder name:');
+  if (!name) return;
   
-  if (!folderName || !folderName.trim()) return;
-  
-  const folderEmoji = prompt('🎨 Enter folder emoji (optional):', '📁');
-  
-  try {
-    const result = await chrome.storage.local.get(['folders']);
+  chrome.storage.local.get(['folders'], function(result) {
     const folders = result.folders || [];
-    
-    const newFolder = {
-      id: `folder-${Date.now()}`,
-      name: folderName.trim(),
-      emoji: folderEmoji || '📁',
-      createdAt: Date.now()
-    };
-    
-    folders.push(newFolder);
-    await chrome.storage.local.set({ folders: folders });
-    
-    await loadFolders();
-    
-    // Select new folder
-    document.getElementById('folder-select').value = newFolder.id;
-    
-    showNotification(`✅ Folder "${folderName}" created!`, 'success');
-    
-  } catch (error) {
-    console.error('Error creating folder:', error);
-    showNotification('❌ Error creating folder', 'error');
-  }
+    folders.push({ id: 'f-' + Date.now(), name: name });
+    chrome.storage.local.set({ folders: folders }, function() {
+      loadFolders();
+      alert('Folder created!');
+    });
+  });
 }
 
-// Load custom folders
-async function loadFolders() {
-  try {
-    const result = await chrome.storage.local.get(['folders']);
+// Load folders
+function loadFolders() {
+  chrome.storage.local.get(['folders'], function(result) {
     const folders = result.folders || [];
-    
     const select = document.getElementById('folder-select');
-    const currentValue = select.value;
     
-    // Keep default folders
     select.innerHTML = `
       <option value="default">Default</option>
       <option value="videos">📹 Videos</option>
       <option value="stories">📝 Stories</option>
       <option value="novels">📚 Novels</option>
-      <option value="tutorials">🎓 Tutorials</option>
-      <option value="images">🖼️ Images</option>
-      <option value="audio">🎵 Audio</option>
     `;
     
-    // Add custom folders
-    folders.forEach(folder => {
+    folders.forEach(f => {
       const option = document.createElement('option');
-      option.value = folder.id;
-      option.textContent = `${folder.emoji} ${folder.name}`;
+      option.value = f.id;
+      option.textContent = f.name;
       select.appendChild(option);
     });
-    
-    // Restore selection
-    if (currentValue) select.value = currentValue;
-    
-  } catch (error) {
-    console.error('Error loading folders:', error);
-  }
+  });
 }
 
 // Search bookmarks
-async function searchBookmarks(query) {
-  if (!query.trim()) {
-    await loadBookmarks();
+function searchBookmarks(query) {
+  if (!query) {
+    loadBookmarks();
     return;
   }
   
-  try {
-    const result = await chrome.storage.local.get(['bookmarks']);
+  chrome.storage.local.get(['bookmarks'], function(result) {
     const bookmarks = result.bookmarks || [];
-    
-    const searchLower = query.toLowerCase();
     const filtered = bookmarks.filter(bm => 
-      bm.title.toLowerCase().includes(searchLower) ||
-      bm.url.toLowerCase().includes(searchLower) ||
-      bm.tags.some(tag => tag.toLowerCase().includes(searchLower)) ||
-      bm.platform.toLowerCase().includes(searchLower)
+      bm.title.toLowerCase().includes(query.toLowerCase()) ||
+      bm.url.toLowerCase().includes(query.toLowerCase())
     );
     
     const listContainer = document.getElementById('bookmarks-list');
     
     if (filtered.length === 0) {
-      listContainer.innerHTML = '<p class="empty-state">No bookmarks found 🔍</p>';
+      listContainer.innerHTML = '<p class="empty-state">No results</p>';
       return;
     }
     
-    listContainer.innerHTML = filtered.slice(0, 5).map(bookmark => `
-      <div class="bookmark-item" data-url="${bookmark.url}">
-        <div class="bookmark-icon">${getCategoryIcon(bookmark.category)}</div>
+    listContainer.innerHTML = filtered.slice(0, 5).map(bm => `
+      <div class="bookmark-item" data-url="${bm.url}">
+        <div class="bookmark-icon">${getCategoryIcon(bm.category)}</div>
         <div class="bookmark-info">
-          <div class="bookmark-title">${escapeHtml(bookmark.title)}</div>
-          <div class="bookmark-meta">
-            ${bookmark.platform} • ${getTimeAgo(bookmark.timestamp)} • ${bookmark.folder}
-          </div>
+          <div class="bookmark-title">${escapeHtml(bm.title)}</div>
+          <div class="bookmark-meta">${bm.platform} • ${getTimeAgo(bm.timestamp)}</div>
         </div>
       </div>
     `).join('');
     
-    // Add click listeners
-    listContainer.querySelectorAll('.bookmark-item').forEach(item => {
-      item.addEventListener('click', () => {
-        chrome.tabs.create({ url: item.dataset.url });
+    document.querySelectorAll('.bookmark-item').forEach(item => {
+      item.addEventListener('click', function() {
+        chrome.tabs.create({ url: this.dataset.url });
       });
     });
-    
-  } catch (error) {
-    console.error('Error searching bookmarks:', error);
-  }
+  });
 }
 
-// Show notification (temporary alert - will be replaced with toast)
-function showNotification(message, type = 'info') {
-  // For now, using alert (will add toast notifications later)
-  alert(message);
-}
-
-console.log('popup.js loaded successfully');
+console.log('Popup script loaded successfully');
