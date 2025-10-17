@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Bookmark Organizer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header Section -->
+    <header>
+      <h1>📚 Smart Bookmarks</h1>
+      <button id="settings-btn" title="Settings">⚙️</button>
+    </header>
+    
+    <!-- Current Page Info -->
+    <div class="current-page">
+      <h3 id="page-title">Loading...</h3>
+      <p id="page-url">...</p>
+      <p id="detected-category">
+        <span class="label">Category:</span> 
+        <span id="category-badge" class="badge">Detecting...</span>
+      </p>
+    </div>
+    
+    <!-- Save Section -->
+    <div class="save-section">
+      <button id="save-btn" class="primary-btn">
+        💾 Save Bookmark
+      </button>
+      
+      <!-- Category Selector -->
+      <div class="form-group">
+        <label for="category-select">📂 Category:</label>
+        <select id="category-select">
+          <option value="auto">🤖 Auto-detect</option>
+          <option value="video">🎥 Video</option>
+          <option value="text">📝 Text</option>
+          <option value="audio">🎵 Audio</option>
+          <option value="image">🖼️ Image</option>
+        </select>
+      </div>
+      
+      <!-- Folder Selector -->
+      <div class="form-group">
+        <label for="folder-select">📁 Folder:</label>
+        <div class="folder-controls">
+          <select id="folder-select">
+            <option value="default">Default</option>
+            <option value="videos">📹 Videos</option>
+            <option value="stories">📝 Stories</option>
+            <option value="novels">📚 Novels</option>
+            <option value="tutorials">🎓 Tutorials</option>
+            <option value="images">🖼️ Images</option>
+            <option value="audio">🎵 Audio</option>
+          </select>
+          <button id="add-folder-btn" class="small-btn" title="Create new folder">+</button>
+        </div>
+      </div>
+      
+      <!-- Tags Input -->
+      <div class="form-group">
+        <label for="tags-input">🏷️ Tags (optional):</label>
+        <input 
+          type="text" 
+          id="tags-input" 
+          placeholder="e.g., programming, tutorial, motivation"
+          maxlength="100"
+        >
+      </div>
+    </div>
+    
+    <!-- Search Section -->
+    <div class="search-section">
+      <input 
+        type="text" 
+        id="search-box" 
+        placeholder="🔍 Search bookmarks..."
+      >
+    </div>
+    
+    <!-- Recent Bookmarks -->
+    <div class="recent-bookmarks">
+      <h3>Recent Bookmarks</h3>
+      <div id="bookmarks-list">
+        <p class="empty-state">No bookmarks yet. Save your first one! 🎉</p>
+      </div>
+    </div>
+    
+    <!-- Stats Footer -->
+    <div class="stats">
+      <p>
+        <span id="total-count">0</span> bookmarks saved
+        <span id="plan-badge" class="plan">FREE</span>
+      </p>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
