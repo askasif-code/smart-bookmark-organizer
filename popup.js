@@ -223,29 +223,53 @@ async function saveBookmark() {
   }
 }
 
-// Get platform name from URL
+// Get platform name from URL (ENHANCED)
 function getPlatform(url) {
-  if (!url) return 'web';
+  if (!url) return 'Web';
   
   const platforms = {
+    // Social Media
     'youtube.com': 'YouTube',
     'youtu.be': 'YouTube',
     'instagram.com': 'Instagram',
     'twitter.com': 'Twitter',
+    'x.com': 'Twitter',
     'tiktok.com': 'TikTok',
     'facebook.com': 'Facebook',
+    'fb.watch': 'Facebook',
     'linkedin.com': 'LinkedIn',
+    
+    // Content Platforms
     'reddit.com': 'Reddit',
+    'medium.com': 'Medium',
+    'substack.com': 'Substack',
+    'dev.to': 'Dev.to',
+    
+    // Media
     'spotify.com': 'Spotify',
-    'medium.com': 'Medium'
+    'soundcloud.com': 'SoundCloud',
+    'vimeo.com': 'Vimeo',
+    'twitch.tv': 'Twitch',
+    'dailymotion.com': 'Dailymotion',
+    
+    // Design & Images
+    'pinterest.com': 'Pinterest',
+    'unsplash.com': 'Unsplash',
+    'pexels.com': 'Pexels',
+    'behance.net': 'Behance',
+    'dribbble.com': 'Dribbble'
   };
   
   for (const [domain, name] of Object.entries(platforms)) {
-    if (url.includes(domain)) return name;
+    if (url.includes(domain)) {
+      console.log(`🌐 Platform detected: ${name}`);
+      return name;
+    }
   }
   
   return 'Web';
 }
+
 
 // Load and display bookmarks
 async function loadBookmarks() {
