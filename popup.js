@@ -54,102 +54,113 @@ async function loadCurrentPage() {
   }
 }
 
-// Detect content category from URL
+// Detect content category from URL (ENHANCED VERSION)
 function detectCategory(url) {
   if (!url) return 'text';
   
-  // Video patterns
+  // === VIDEO PATTERNS === (YouTube, Instagram Reels, TikTok, etc.)
   const videoPatterns = [
+    // YouTube
     /youtube\.com\/watch/i,
     /youtu\.be\//i,
-    /vimeo\.com/i,
-    /tiktok\.com/i,
-    /instagram\.com\/reel/i,
-    /instagram\.com\/tv/i,
+    
+    // Instagram Videos
+    /instagram\.com\/reel\//i,
+    /instagram\.com\/tv\//i,
+    
+    // TikTok
+    /tiktok\.com\/@[\w.-]+\/video/i,
+    
+    // Facebook
     /facebook\.com\/watch/i,
-    /dailymotion\.com/i,
-    /twitch\.tv/i
+    /fb\.watch\//i,
+    
+    // Vimeo
+    /vimeo\.com\/\d+/i,
+    
+    // Twitch
+    /twitch\.tv\/videos/i,
+    /twitch\.tv\/\w+$/i,
+    
+    // Others
+    /dailymotion\.com\/video/i
   ];
   
-  // Audio patterns
+  // === AUDIO PATTERNS === (Spotify, SoundCloud, Podcasts)
   const audioPatterns = [
     /spotify\.com\/track/i,
     /spotify\.com\/episode/i,
-    /soundcloud\.com/i,
+    /spotify\.com\/playlist/i,
+    /soundcloud\.com\/[\w-]+\/[\w-]+/i,
     /apple\.com.*podcast/i,
     /anchor\.fm/i
   ];
   
-  // Image patterns
+  // === IMAGE PATTERNS === (Instagram Posts, Pinterest, Image Sites)
   const imagePatterns = [
-    /pinterest\.com/i,
-    /unsplash\.com/i,
-    /pexels\.com/i,
-    /flickr\.com/i,
+    // Instagram Images/Posts
     /instagram\.com\/p\//i,
-    /behance\.net/i
+    
+    // Pinterest
+    /pinterest\.com\/pin/i,
+    
+    // Stock Photo Sites
+    /unsplash\.com\/photos/i,
+    /pexels\.com\/photo/i,
+    /flickr\.com\/photos/i,
+    
+    // Design Portfolios
+    /behance\.net\/gallery/i,
+    /dribbble\.com\/shots/i
+  ];
+  
+  // === TEXT PATTERNS === (Blogs, Articles, Social Media Text)
+  const textPatterns = [
+    /medium\.com\/@[\w-]+\//i,
+    /substack\.com\/p\//i,
+    /reddit\.com\/r\/[\w]+\/comments/i,
+    /twitter\.com\/[\w]+\/status/i,
+    /x\.com\/[\w]+\/status/i,
+    /linkedin\.com\/pulse/i
   ];
   
   // Check video
   for (const pattern of videoPatterns) {
-    if (pattern.test(url)) return 'video';
+    if (pattern.test(url)) {
+      console.log('🎥 Video detected:', url);
+      return 'video';
+    }
   }
   
   // Check audio
   for (const pattern of audioPatterns) {
-    if (pattern.test(url)) return 'audio';
+    if (pattern.test(url)) {
+      console.log('🎵 Audio detected:', url);
+      return 'audio';
+    }
   }
   
   // Check image
   for (const pattern of imagePatterns) {
-    if (pattern.test(url)) return 'image';
+    if (pattern.test(url)) {
+      console.log('🖼️ Image detected:', url);
+      return 'image';
+    }
+  }
+  
+  // Check text
+  for (const pattern of textPatterns) {
+    if (pattern.test(url)) {
+      console.log('📝 Text detected:', url);
+      return 'text';
+    }
   }
   
   // Default to text
+  console.log('📄 Default (text) for:', url);
   return 'text';
 }
 
-// Update category badge
-function updateCategoryBadge(category) {
-  const badge = document.getElementById('category-badge');
-  
-  const categoryInfo = {
-    video: { text: '🎥 Video', color: '#e53e3e' },
-    audio: { text: '🎵 Audio', color: '#38b2ac' },
-    image: { text: '🖼️ Image', color: '#ed8936' },
-    text: { text: '📝 Text', color: '#4299e1' }
-  };
-  
-  const info = categoryInfo[category] || categoryInfo.text;
-  badge.textContent = info.text;
-  badge.style.background = info.color;
-}
-
-// Setup all event listeners
-function setupEventListeners() {
-  // Save bookmark button
-  document.getElementById('save-btn').addEventListener('click', saveBookmark);
-  
-  // Settings button
-  document.getElementById('settings-btn').addEventListener('click', () => {
-    alert('⚙️ Settings feature coming soon!\n\n- Theme customization\n- Sync settings\n- Pro upgrade');
-  });
-  
-  // Add folder button
-  document.getElementById('add-folder-btn').addEventListener('click', addNewFolder);
-  
-  // Search functionality
-  document.getElementById('search-box').addEventListener('input', (e) => {
-    searchBookmarks(e.target.value);
-  });
-  
-  // Category selector change
-  document.getElementById('category-select').addEventListener('change', (e) => {
-    updateCategoryBadge(e.target.value === 'auto' ? detectCategory(window.currentUrl) : e.target.value);
-  });
-  
-  console.log('Event listeners attached');
-}
 
 // Save bookmark function
 async function saveBookmark() {
