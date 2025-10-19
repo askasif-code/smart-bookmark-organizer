@@ -1,4 +1,4 @@
-// Smart Bookmark Organizer - Content Script
+// Smart Bookmark Organizer - Content Script (ENHANCED METADATA EXTRACTION)
 console.log('Content script loaded on:', window.location.href);
 
 // Extract page metadata
@@ -8,25 +8,35 @@ function extractMetadata() {
     url: window.location.href,
     description: getMetaContent('description') || getMetaContent('og:description'),
     image: getMetaContent('og:image') || getMetaContent('twitter:image'),
-    author: getMetaContent('author') || getMetaContent('article:author'),
-    publishDate: getMetaContent('article:published_time'),
-    siteName: getMetaContent('og:site_name'),
-    keywords: getMetaContent('keywords')
+    author: getMetaContent('author'),
+    siteName: getMetaContent('og:site_name')
   };
   
-  // Get YouTube specific data
-  if (window.location.hostname.includes('youtube.com')) {
-    metadata.duration = getYouTubeDuration();
-    metadata.views = getYouTubeViews();
-    metadata.channel = getYouTubeChannel();
-  }
-  
-  // Get Instagram specific data
+  // Enhanced Instagram detection
   if (window.location.hostname.includes('instagram.com')) {
-    metadata.instagramType = getInstagramType();
-    metadata.likes = getInstagramLikes();
+    const instaData = extractInstagramData();
+    if (instaData) {
+      Object.assign(metadata, instaData);
+    }
   }
   
+  // Enhanced YouTube detection
+  if (window.location.hostname.includes('youtube.com')) {
+    const ytData = extractYouTubeData();
+    if (ytData) {
+      Object.assign(metadata, ytData);
+    }
+  }
+  
+  // TikTok detection
+  if (window.location.hostname.includes('tiktok.com')) {
+    const ttData = extractTikTokData();
+    if (ttData) {
+      Object.assign(metadata, ttData);
+    }
+  }
+  
+  console.log('Metadata extracted:', metadata);
   return metadata;
 }
 
@@ -38,52 +48,137 @@ function getMetaContent(name) {
   return meta ? meta.getAttribute('content') : null;
 }
 
-// Get YouTube video duration
-function getYouTubeDuration() {
+// Extract Instagram specific data
+function extractInstagramData() {
   try {
-    const durationElement = document.querySelector('.ytp-time-duration');
-    return durationElement ? durationElement.textContent : null;
+    const data = {};
+    
+    // Get title from og:title meta tag
+    const ogTitle = getMetaContent('og:title');
+    if (ogTitle) {
+      data.title = ogTitle;
+    }
+    
+    // Get description
+    const ogDescription = getMetaContent('og:description');
+    if (ogDescription) {
+      data.description = ogDescription;
+    }
+    
+    // Detect content type
+    const pathname = window.location.pathname;
+    if (pathname.includes('/reel/')) {
+      data.instagramType = 'Reel';
+      data.category = 'video';
+    } else if (pathname.includes('/p/')) {
+      data.instagramType = 'Post';
+      data.category = 'image';
+    } else if (pathname.includes('/tv/')) {
+      data.instagramType = 'IGTV';
+      data.category = 'video';
+    }
+    
+    // Try to get username from URL
+    const urlParts = pathname.split('/').filter(p => p);
+    if (urlParts.length > 0 && !['p', 'reel', 'tv'].includes(urlParts[0])) {
+      data.username = '@' + urlParts[0];
+    }
+    
+    // Get thumbnail
+    const ogImage = getMetaContent('og:image');
+    if (ogImage) {
+      data.thumbnail = ogImage;
+    }
+    
+    console.log('Instagram data extracted:', data);
+    return data;
+    
   } catch (error) {
+    console.error('Error extracting Instagram data:', error);
     return null;
   }
 }
 
-// Get YouTube views
-function getYouTubeViews() {
+// Extract YouTube specific data
+function extractYouTubeData() {
   try {
-    const viewsElement = document.querySelector('span.view-count, span.short-view-count');
-    return viewsElement ? viewsElement.textContent : null;
+    const data = {};
+    
+    // Get video title from multiple possible selectors
+    let ytTitle = document.querySelector('h1.ytd-video-primary-info-renderer');
+    if (!ytTitle) {
+      ytTitle = document.querySelector('h1 yt-formatted-string');
+    }
+    if (!ytTitle) {
+      ytTitle = document.querySelector('h1.title');
+    }
+    
+    if (ytTitle) {
+      data.title = ytTitle.textContent.trim();
+    }
+    
+    // Get channel name
+    const channelName = document.querySelector('#channel-name a, ytd-channel-name a, #owner-name a');
+    if (channelName) {
+      data.channel = channelName.textContent.trim();
+    }
+    
+    // Get video duration
+    const duration = document.querySelector('.ytp-time-duration');
+    if (duration) {
+      data.duration = duration.textContent;
+    }
+    
+    // Get view count
+    const viewCount = document.querySelector('span.view-count, .view-count-renderer');
+    if (viewCount) {
+      data.views = viewCount.textContent.trim();
+    }
+    
+    data.category = 'video';
+    
+    console.log('YouTube data extracted:', data);
+    return data;
+    
   } catch (error) {
+    console.error('Error extracting YouTube data:', error);
     return null;
   }
 }
 
-// Get YouTube channel name
-function getYouTubeChannel() {
+// Extract TikTok data
+function extractTikTokData() {
   try {
-    const channelElement = document.querySelector('ytd-channel-name a, #channel-name a');
-    return channelElement ? channelElement.textContent.trim() : null;
+    const data = {};
+    
+    // Get title from meta tags
+    const ttTitle = getMetaContent('og:title') || getMetaContent('twitter:title');
+    if (ttTitle) {
+      data.title = ttTitle;
+    }
+    
+    // Get description
+    const ttDescription = getMetaContent('og:description');
+    if (ttDescription) {
+      data.description = ttDescription;
+    }
+    
+    // TikTok is always video
+    data.category = 'video';
+    data.tiktokType = 'Video';
+    
+    // Try to extract username from URL
+    const pathname = window.location.pathname;
+    const match = pathname.match(/@([\w.-]+)/);
+    if (match) {
+      data.username = '@' + match[1];
+    }
+    
+    console.log('TikTok data extracted:', data);
+    return data;
+    
   } catch (error) {
-    return null;
-  }
-}
-
-// Detect Instagram content type
-function getInstagramType() {
-  const url = window.location.pathname;
-  if (url.includes('/reel/')) return 'reel';
-  if (url.includes('/tv/')) return 'igtv';
-  if (url.includes('/p/')) return 'post';
-  if (url.includes('/stories/')) return 'story';
-  return 'unknown';
-}
-
-// Get Instagram likes (approximate)
-function getInstagramLikes() {
-  try {
-    const likesElement = document.querySelector('section button span');
-    return likesElement ? likesElement.textContent : null;
-  } catch (error) {
+    console.error('Error extracting TikTok data:', error);
     return null;
   }
 }
@@ -108,11 +203,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true; // Keep channel open for async response
 });
 
-// Optional: Auto-detect when page loads
+// Auto-extract on page load
 window.addEventListener('load', () => {
-  console.log('Page loaded, metadata extracted');
+  console.log('Page fully loaded, extracting metadata...');
   const metadata = extractMetadata();
-  console.log('Metadata:', metadata);
+  
+  // Send to background script (optional)
+  chrome.runtime.sendMessage({
+    action: 'pageMetadataExtracted',
+    metadata: metadata,
+    url: window.location.href
+  }).catch(err => {
+    console.log('Background script not listening:', err);
+  });
 });
 
-console.log('Content script initialized');
+console.log('Content script initialized successfully');

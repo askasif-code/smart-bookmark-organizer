@@ -31,13 +31,13 @@ header {
   border-bottom: 2px solid #f0f0f0;
 }
 
-header h1 {
-  font-size: 20px;
-  color: #667eea;
-  font-weight: 700;
+.header-actions {
+  display: flex;
+  gap: 10px;
 }
 
-#settings-btn {
+#settings-btn,
+#export-btn {
   background: none;
   border: none;
   font-size: 22px;
@@ -45,6 +45,15 @@ header h1 {
   transition: transform 0.3s ease;
   padding: 5px;
 }
+
+#settings-btn:hover {
+  transform: rotate(90deg);
+}
+
+#export-btn:hover {
+  transform: translateY(-3px);
+}
+
 
 #settings-btn:hover {
   transform: rotate(90deg);
