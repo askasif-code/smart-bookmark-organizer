@@ -14,6 +14,10 @@ function init() {
   setupEventListeners();
   loadFolders();
 }
+// Settings button
+document.getElementById('settingsBtn').addEventListener('click', () => {
+    window.location.href = 'settings.html';
+});
 
 // Load current page info (ENHANCED WITH METADATA)
 function loadCurrentPage() {

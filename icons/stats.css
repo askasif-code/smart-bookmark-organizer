@@ -1,0 +1,252 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 30px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+h1 {
+    font-size: 28px;
+    color: #333;
+    font-weight: 700;
+}
+
+.back-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.back-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card.video {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+}
+
+.stat-card.image {
+    background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+}
+
+.stat-card.audio {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+}
+
+.stat-card.text {
+    background: linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%);
+}
+
+.stat-card.folders {
+    background: linear-gradient(135deg, #fdcbf1 0%, #e6dee9 100%);
+}
+
+.stat-icon {
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+/* Sections */
+.section {
+    margin-bottom: 30px;
+}
+
+h2 {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+/* Platform List */
+.platform-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.platform-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.platform-item:hover {
+    background: #e9ecef;
+}
+
+.platform-name {
+    font-weight: 600;
+    color: #495057;
+}
+
+.platform-count {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Tag List */
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.tag-item {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s;
+}
+
+.tag-item:hover {
+    transform: scale(1.05);
+}
+
+.tag-count {
+    background: rgba(255, 255, 255, 0.3);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+}
+
+/* Activity Chart */
+.activity-chart {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.activity-day {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.activity-day:last-child {
+    border-bottom: none;
+}
+
+.activity-date {
+    font-weight: 600;
+    color: #495057;
+    font-size: 14px;
+}
+
+.activity-bar {
+    flex: 1;
+    margin: 0 15px;
+    background: #e9ecef;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.activity-fill {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s;
+}
+
+.activity-count {
+    font-weight: 600;
+    color: #667eea;
+    font-size: 14px;
+    min-width: 30px;
+    text-align: right;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+    font-size: 14px;
+}

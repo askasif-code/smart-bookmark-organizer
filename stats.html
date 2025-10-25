@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics - Smart Bookmark Organizer</title>
+    <link rel="stylesheet" href="stats.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Statistics Dashboard</h1>
+            <button id="backBtn" class="back-btn">← Back</button>
+        </header>
+
+        <div class="stats-grid">
+            <!-- Total Bookmarks -->
+            <div class="stat-card">
+                <div class="stat-icon">📚</div>
+                <div class="stat-number" id="totalBookmarks">0</div>
+                <div class="stat-label">Total Bookmarks</div>
+            </div>
+
+            <!-- Video Bookmarks -->
+            <div class="stat-card video">
+                <div class="stat-icon">🎥</div>
+                <div class="stat-number" id="videoCount">0</div>
+                <div class="stat-label">Videos</div>
+            </div>
+
+            <!-- Image Bookmarks -->
+            <div class="stat-card image">
+                <div class="stat-icon">🖼️</div>
+                <div class="stat-number" id="imageCount">0</div>
+                <div class="stat-label">Images</div>
+            </div>
+
+            <!-- Audio Bookmarks -->
+            <div class="stat-card audio">
+                <div class="stat-icon">🎵</div>
+                <div class="stat-number" id="audioCount">0</div>
+                <div class="stat-label">Audio</div>
+            </div>
+
+            <!-- Text Bookmarks -->
+            <div class="stat-card text">
+                <div class="stat-icon">📝</div>
+                <div class="stat-number" id="textCount">0</div>
+                <div class="stat-label">Text</div>
+            </div>
+
+            <!-- Folders -->
+            <div class="stat-card folders">
+                <div class="stat-icon">📁</div>
+                <div class="stat-number" id="folderCount">0</div>
+                <div class="stat-label">Folders</div>
+            </div>
+        </div>
+
+        <!-- Platform Breakdown -->
+        <div class="section">
+            <h2>🌐 Platform Breakdown</h2>
+            <div id="platformList" class="platform-list"></div>
+        </div>
+
+        <!-- Top Tags -->
+        <div class="section">
+            <h2>🏷️ Most Used Tags</h2>
+            <div id="tagList" class="tag-list"></div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="section">
+            <h2>📅 Recent Activity</h2>
+            <div id="activityChart" class="activity-chart"></div>
+        </div>
+    </div>
+
+    <script src="stats.js"></script>
+</body>
+</html>

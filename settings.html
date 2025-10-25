@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Smart Bookmark Organizer</title>
+    <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚙️ Settings</h1>
+            <button id="backBtn" class="back-btn">← Back</button>
+        </header>
+
+        <div class="settings-section">
+            <h2>🎨 Appearance</h2>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="setting-label">Theme</span>
+                    <span class="setting-desc">Choose your preferred theme</span>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="themeToggle">
+                    <span class="slider"></span>
+                    <span class="toggle-label" id="themeLabel">Light</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h2>🔍 Detection</h2>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="setting-label">Auto-detect Content</span>
+                    <span class="setting-desc">Automatically detect content type</span>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="autoDetect" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h2>📁 Folders</h2>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="setting-label">Default Folder</span>
+                    <span class="setting-desc">Select default folder for bookmarks</span>
+                </div>
+                <select id="defaultFolder" class="folder-select">
+                    <option value="default">Default Folder</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h2>🔔 Notifications</h2>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="setting-label">Show Notifications</span>
+                    <span class="setting-desc">Get notified when bookmark is saved</span>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="notifications" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="settings-section danger-zone">
+            <h2>⚠️ Danger Zone</h2>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="setting-label">Reset All Data</span>
+                    <span class="setting-desc">Delete all bookmarks and settings</span>
+                </div>
+                <button id="resetBtn" class="danger-btn">Reset All</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Smart Bookmark Organizer v1.0.0</p>
+            <p>Made with ❤️ by Asif</p>
+        </div>
+    </div>
+
+    <script src="settings.js"></script>
+</body>
+</html>
