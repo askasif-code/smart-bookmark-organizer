@@ -1,221 +1,155 @@
-// Smart Bookmark Organizer - Content Script (ENHANCED METADATA EXTRACTION)
+// Content Script - Enhanced Metadata Extraction
 console.log('Content script loaded on:', window.location.href);
 
-// Extract page metadata
-function extractMetadata() {
-  const metadata = {
-    title: document.title,
-    url: window.location.href,
-    description: getMetaContent('description') || getMetaContent('og:description'),
-    image: getMetaContent('og:image') || getMetaContent('twitter:image'),
-    author: getMetaContent('author'),
-    siteName: getMetaContent('og:site_name')
-  };
-  
-  // Enhanced Instagram detection
-  if (window.location.hostname.includes('instagram.com')) {
-    const instaData = extractInstagramData();
-    if (instaData) {
-      Object.assign(metadata, instaData);
-    }
-  }
-  
-  // Enhanced YouTube detection
-  if (window.location.hostname.includes('youtube.com')) {
-    const ytData = extractYouTubeData();
-    if (ytData) {
-      Object.assign(metadata, ytData);
-    }
-  }
-  
-  // TikTok detection
-  if (window.location.hostname.includes('tiktok.com')) {
-    const ttData = extractTikTokData();
-    if (ttData) {
-      Object.assign(metadata, ttData);
-    }
-  }
-  
-  console.log('Metadata extracted:', metadata);
-  return metadata;
-}
-
-// Get meta tag content
-function getMetaContent(name) {
-  const meta = document.querySelector(
-    `meta[name="${name}"], meta[property="${name}"]`
-  );
-  return meta ? meta.getAttribute('content') : null;
-}
-
-// Extract Instagram specific data
-function extractInstagramData() {
-  try {
-    const data = {};
-    
-    // Get title from og:title meta tag
-    const ogTitle = getMetaContent('og:title');
-    if (ogTitle) {
-      data.title = ogTitle;
-    }
-    
-    // Get description
-    const ogDescription = getMetaContent('og:description');
-    if (ogDescription) {
-      data.description = ogDescription;
-    }
-    
-    // Detect content type
-    const pathname = window.location.pathname;
-    if (pathname.includes('/reel/')) {
-      data.instagramType = 'Reel';
-      data.category = 'video';
-    } else if (pathname.includes('/p/')) {
-      data.instagramType = 'Post';
-      data.category = 'image';
-    } else if (pathname.includes('/tv/')) {
-      data.instagramType = 'IGTV';
-      data.category = 'video';
-    }
-    
-    // Try to get username from URL
-    const urlParts = pathname.split('/').filter(p => p);
-    if (urlParts.length > 0 && !['p', 'reel', 'tv'].includes(urlParts[0])) {
-      data.username = '@' + urlParts[0];
-    }
-    
-    // Get thumbnail
-    const ogImage = getMetaContent('og:image');
-    if (ogImage) {
-      data.thumbnail = ogImage;
-    }
-    
-    console.log('Instagram data extracted:', data);
-    return data;
-    
-  } catch (error) {
-    console.error('Error extracting Instagram data:', error);
-    return null;
-  }
-}
-
-// Extract YouTube specific data
-function extractYouTubeData() {
-  try {
-    const data = {};
-    
-    // Get video title from multiple possible selectors
-    let ytTitle = document.querySelector('h1.ytd-video-primary-info-renderer');
-    if (!ytTitle) {
-      ytTitle = document.querySelector('h1 yt-formatted-string');
-    }
-    if (!ytTitle) {
-      ytTitle = document.querySelector('h1.title');
-    }
-    
-    if (ytTitle) {
-      data.title = ytTitle.textContent.trim();
-    }
-    
-    // Get channel name
-    const channelName = document.querySelector('#channel-name a, ytd-channel-name a, #owner-name a');
-    if (channelName) {
-      data.channel = channelName.textContent.trim();
-    }
-    
-    // Get video duration
-    const duration = document.querySelector('.ytp-time-duration');
-    if (duration) {
-      data.duration = duration.textContent;
-    }
-    
-    // Get view count
-    const viewCount = document.querySelector('span.view-count, .view-count-renderer');
-    if (viewCount) {
-      data.views = viewCount.textContent.trim();
-    }
-    
-    data.category = 'video';
-    
-    console.log('YouTube data extracted:', data);
-    return data;
-    
-  } catch (error) {
-    console.error('Error extracting YouTube data:', error);
-    return null;
-  }
-}
-
-// Extract TikTok data
-function extractTikTokData() {
-  try {
-    const data = {};
-    
-    // Get title from meta tags
-    const ttTitle = getMetaContent('og:title') || getMetaContent('twitter:title');
-    if (ttTitle) {
-      data.title = ttTitle;
-    }
-    
-    // Get description
-    const ttDescription = getMetaContent('og:description');
-    if (ttDescription) {
-      data.description = ttDescription;
-    }
-    
-    // TikTok is always video
-    data.category = 'video';
-    data.tiktokType = 'Video';
-    
-    // Try to extract username from URL
-    const pathname = window.location.pathname;
-    const match = pathname.match(/@([\w.-]+)/);
-    if (match) {
-      data.username = '@' + match[1];
-    }
-    
-    console.log('TikTok data extracted:', data);
-    return data;
-    
-  } catch (error) {
-    console.error('Error extracting TikTok data:', error);
-    return null;
-  }
-}
-
-// Listen for messages from popup or background
+// Listen for metadata requests
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log('Content script received message:', request);
-  
   if (request.action === 'getMetadata') {
     const metadata = extractMetadata();
     sendResponse({ metadata: metadata });
   }
+  return true;
+});
+
+// Extract metadata from current page
+function extractMetadata() {
+  const url = window.location.href;
+  const metadata = {
+    url: url,
+    title: document.title,
+    description: getMetaContent('description'),
+    category: detectCategoryFromPage()
+  };
+
+  // Platform-specific extraction
+  if (url.includes('instagram.com')) {
+    metadata.platform = 'Instagram';
+    metadata.username = extractInstagramUsername();
+    
+    if (url.includes('/reel/') || url.includes('/tv/')) {
+      metadata.category = 'video';
+      metadata.title = extractInstagramTitle() || 'Instagram Reel';
+    } else if (url.includes('/p/')) {
+      metadata.category = 'image';
+      metadata.title = extractInstagramTitle() || 'Instagram Post';
+    }
+  } 
+  else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    metadata.platform = 'YouTube';
+    metadata.category = 'video';
+    metadata.title = extractYouTubeTitle();
+    metadata.channel = extractYouTubeChannel();
+    metadata.duration = extractYouTubeDuration();
+  }
+  else if (url.includes('tiktok.com')) {
+    metadata.platform = 'TikTok';
+    metadata.category = 'video';
+    metadata.title = extractTikTokTitle();
+    metadata.username = extractTikTokUsername();
+  }
+  else if (url.includes('twitter.com') || url.includes('x.com')) {
+    metadata.platform = 'Twitter';
+    metadata.username = extractTwitterUsername();
+  }
+  else if (url.includes('spotify.com')) {
+    metadata.platform = 'Spotify';
+    metadata.category = 'audio';
+  }
+
+  return metadata;
+}
+
+// Instagram username
+function extractInstagramUsername() {
+  const usernameEl = document.querySelector('a[href^="/"][href*="/"]');
+  if (usernameEl) {
+    const href = usernameEl.getAttribute('href');
+    const match = href.match(/^\/([^\/]+)\//);
+    if (match) return '@' + match[1];
+  }
+  return null;
+}
+
+// Instagram title
+function extractInstagramTitle() {
+  const titleEl = document.querySelector('h1');
+  if (titleEl) return titleEl.textContent.trim();
   
-  if (request.action === 'getPageInfo') {
-    sendResponse({
-      title: document.title,
-      url: window.location.href,
-      metadata: extractMetadata()
-    });
+  const metaTitle = document.querySelector('meta[property="og:title"]');
+  if (metaTitle) return metaTitle.getAttribute('content');
+  
+  return null;
+}
+
+// YouTube title
+function extractYouTubeTitle() {
+  const titleEl = document.querySelector('h1.ytd-video-primary-info-renderer, h1.title');
+  if (titleEl) return titleEl.textContent.trim();
+  
+  const metaTitle = document.querySelector('meta[name="title"]');
+  if (metaTitle) return metaTitle.getAttribute('content');
+  
+  return document.title.replace(' - YouTube', '');
+}
+
+// YouTube channel
+function extractYouTubeChannel() {
+  const channelEl = document.querySelector('ytd-channel-name a, .ytd-video-owner-renderer a');
+  if (channelEl) return channelEl.textContent.trim();
+  return null;
+}
+
+// YouTube duration
+function extractYouTubeDuration() {
+  const durationEl = document.querySelector('.ytp-time-duration');
+  if (durationEl) return durationEl.textContent.trim();
+  return null;
+}
+
+// TikTok title
+function extractTikTokTitle() {
+  const titleEl = document.querySelector('h1');
+  if (titleEl) return titleEl.textContent.trim();
+  return 'TikTok Video';
+}
+
+// TikTok username
+function extractTikTokUsername() {
+  const usernameEl = document.querySelector('[data-e2e="browse-username"]');
+  if (usernameEl) return usernameEl.textContent.trim();
+  return null;
+}
+
+// Twitter username
+function extractTwitterUsername() {
+  const urlParts = window.location.pathname.split('/');
+  if (urlParts.length > 1) return '@' + urlParts[1];
+  return null;
+}
+
+// Get meta content
+function getMetaContent(name) {
+  const meta = document.querySelector(`meta[name="${name}"], meta[property="og:${name}"]`);
+  return meta ? meta.getAttribute('content') : null;
+}
+
+// Detect category from page
+function detectCategoryFromPage() {
+  const url = window.location.href.toLowerCase();
+  
+  if (url.includes('youtube.com/watch') || url.includes('youtu.be') || 
+      url.includes('instagram.com/reel') || url.includes('tiktok.com')) {
+    return 'video';
   }
   
-  return true; // Keep channel open for async response
-});
-
-// Auto-extract on page load
-window.addEventListener('load', () => {
-  console.log('Page fully loaded, extracting metadata...');
-  const metadata = extractMetadata();
+  if (url.includes('instagram.com/p/') || url.includes('pinterest.com')) {
+    return 'image';
+  }
   
-  // Send to background script (optional)
-  chrome.runtime.sendMessage({
-    action: 'pageMetadataExtracted',
-    metadata: metadata,
-    url: window.location.href
-  }).catch(err => {
-    console.log('Background script not listening:', err);
-  });
-});
+  if (url.includes('spotify.com') || url.includes('soundcloud.com')) {
+    return 'audio';
+  }
+  
+  return 'text';
+}
 
-console.log('Content script initialized successfully');
+console.log('Content script ready for metadata extraction');

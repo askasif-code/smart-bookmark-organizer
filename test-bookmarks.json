@@ -1,0 +1,26 @@
+[
+  {
+    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "title": "Rick Astley - Never Gonna Give You Up",
+    "category": "video",
+    "platform": "YouTube",
+    "folder": "default",
+    "tags": ["music", "classic"]
+  },
+  {
+    "url": "https://www.instagram.com/p/test123/",
+    "title": "Beautiful Sunset Photo",
+    "category": "image",
+    "platform": "Instagram",
+    "folder": "default",
+    "tags": ["nature", "photography"]
+  },
+  {
+    "url": "https://github.com/",
+    "title": "GitHub Homepage",
+    "category": "text",
+    "platform": "Web",
+    "folder": "default",
+    "tags": ["coding", "development"]
+  }
+]

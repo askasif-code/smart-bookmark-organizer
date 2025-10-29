@@ -1,4 +1,4 @@
-// Smart Bookmark Organizer - Popup Script (ENHANCED WITH METADATA)
+// Smart Bookmark Organizer - Popup Script (ENHANCED WITH METADATA + IMPORT)
 console.log('Popup script loading...');
 
 // Wait for DOM
@@ -14,10 +14,19 @@ function init() {
   setupEventListeners();
   loadFolders();
 }
+
 // Settings button
 document.getElementById('settingsBtn').addEventListener('click', () => {
     window.location.href = 'settings.html';
 });
+
+// Statistics button
+document.getElementById('statsBtn').addEventListener('click', () => {
+    window.location.href = 'stats.html';
+});
+
+// Export button
+document.getElementById('exportBtn').addEventListener('click', exportBookmarks);
 
 // Load current page info (ENHANCED WITH METADATA)
 function loadCurrentPage() {
@@ -121,11 +130,6 @@ function updateCategoryBadge(category) {
 function setupEventListeners() {
   // Save button
   document.getElementById('save-btn').addEventListener('click', saveBookmark);
-  
-  // Settings
-  document.getElementById('settings-btn').addEventListener('click', function() {
-    alert('⚙️ Settings coming soon!\n\n- Theme options\n- Sync settings\n- Export/Import data');
-  });
   
   // Add folder
   document.getElementById('add-folder-btn').addEventListener('click', addNewFolder);
@@ -303,15 +307,7 @@ function loadFolders() {
     const folders = result.folders || [];
     const select = document.getElementById('folder-select');
     
-    select.innerHTML = `
-      <option value="default">Default</option>
-      <option value="videos">📹 Videos</option>
-      <option value="stories">📝 Stories</option>
-      <option value="novels">📚 Novels</option>
-      <option value="tutorials">🎓 Tutorials</option>
-      <option value="images">🖼️ Images</option>
-      <option value="audio">🎵 Audio</option>
-    `;
+    select.innerHTML = '<option value="default">Default</option>';
     
     folders.forEach(f => {
       const option = document.createElement('option');
@@ -367,4 +363,218 @@ function searchBookmarks(query) {
   });
 }
 
-console.log('Popup script loaded successfully');
+// ========================================
+// EXPORT FUNCTIONALITY
+// ========================================
+function exportBookmarks() {
+  chrome.storage.local.get(['bookmarks'], function(result) {
+    const bookmarks = result.bookmarks || [];
+    
+    if (bookmarks.length === 0) {
+      alert('❌ No bookmarks to export!');
+      return;
+    }
+    
+    // Ask format
+    const format = confirm('Click OK for JSON, Cancel for CSV');
+    
+    if (format) {
+      // Export as JSON
+      const dataStr = JSON.stringify(bookmarks, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'bookmarks-' + Date.now() + '.json';
+      link.click();
+      
+      alert('✅ Exported ' + bookmarks.length + ' bookmarks as JSON!');
+    } else {
+      // Export as CSV
+      let csv = 'Title,URL,Category,Platform,Folder,Tags,Date\n';
+      
+      bookmarks.forEach(bm => {
+        const date = new Date(bm.timestamp).toISOString();
+        const tags = bm.tags ? bm.tags.join(';') : '';
+        csv += `"${bm.title}","${bm.url}","${bm.category}","${bm.platform}","${bm.folder}","${tags}","${date}"\n`;
+      });
+      
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'bookmarks-' + Date.now() + '.csv';
+      link.click();
+      
+      alert('✅ Exported ' + bookmarks.length + ' bookmarks as CSV!');
+    }
+  });
+}
+
+// ========================================
+// IMPORT MODAL FUNCTIONALITY
+// ========================================
+const importModal = document.getElementById('importModal');
+const importBtn = document.getElementById('importBtn');
+const closeImportModal = document.getElementById('closeImportModal');
+const cancelImportBtn = document.getElementById('cancelImportBtn');
+const selectFileBtn = document.getElementById('selectFileBtn');
+const importFileInput = document.getElementById('importFileInput');
+const selectedFileName = document.getElementById('selectedFileName');
+const confirmImportBtn = document.getElementById('confirmImportBtn');
+
+// Open import modal
+importBtn.addEventListener('click', () => {
+    importModal.classList.add('show');
+});
+
+// Close modal
+closeImportModal.addEventListener('click', closeModal);
+cancelImportBtn.addEventListener('click', closeModal);
+
+function closeModal() {
+    importModal.classList.remove('show');
+    resetImportForm();
+}
+
+// Close on outside click
+importModal.addEventListener('click', (e) => {
+    if (e.target === importModal) {
+        closeModal();
+    }
+});
+
+// Select file button
+selectFileBtn.addEventListener('click', () => {
+    importFileInput.click();
+});
+
+// File selected
+importFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        selectedFileName.textContent = file.name;
+        confirmImportBtn.disabled = false;
+    } else {
+        resetImportForm();
+    }
+});
+
+// Reset form
+function resetImportForm() {
+    importFileInput.value = '';
+    selectedFileName.textContent = 'No file selected';
+    confirmImportBtn.disabled = true;
+    document.getElementById('importStatus').style.display = 'none';
+}
+
+// Import button - ACTUAL FUNCTIONALITY
+confirmImportBtn.addEventListener('click', async () => {
+    const file = importFileInput.files[0];
+    if (!file) {
+        showImportStatus('Please select a file first!', 'error');
+        return;
+    }
+    
+    const format = document.querySelector('input[name="importFormat"]:checked').value;
+    
+    if (format === 'json') {
+        await importFromJSON(file);
+    } else {
+        await importFromCSV(file);
+    }
+});
+
+// Import from JSON
+async function importFromJSON(file) {
+    try {
+        showImportStatus('Reading JSON file...', 'info');
+        
+        const text = await file.text();
+        let importedData;
+        
+        try {
+            importedData = JSON.parse(text);
+        } catch (e) {
+            showImportStatus('❌ Invalid JSON file format!', 'error');
+            return;
+        }
+        
+        // Validate structure
+        if (!Array.isArray(importedData)) {
+            showImportStatus('❌ JSON must be an array of bookmarks!', 'error');
+            return;
+        }
+        
+        // Get existing bookmarks
+        const result = await chrome.storage.local.get(['bookmarks']);
+        const existingBookmarks = result.bookmarks || [];
+        
+        // Validate and clean imported bookmarks
+        const validBookmarks = importedData.filter(bm => {
+            return bm.url && bm.title && bm.category;
+        });
+        
+        if (validBookmarks.length === 0) {
+            showImportStatus('❌ No valid bookmarks found in file!', 'error');
+            return;
+        }
+        
+        // Check for duplicates
+        const existingUrls = new Set(existingBookmarks.map(bm => bm.url));
+        const newBookmarks = validBookmarks.filter(bm => !existingUrls.has(bm.url));
+        
+        if (newBookmarks.length === 0) {
+            showImportStatus('⚠️ All bookmarks already exist! No new bookmarks imported.', 'error');
+            return;
+        }
+        
+        // Add unique IDs and timestamps if missing
+        newBookmarks.forEach(bm => {
+            if (!bm.id) bm.id = 'bm-' + Date.now() + '-' + Math.random();
+            if (!bm.timestamp) bm.timestamp = Date.now();
+            if (!bm.folder) bm.folder = 'default';
+            if (!bm.tags) bm.tags = [];
+            if (!bm.platform) bm.platform = 'Web';
+        });
+        
+        // Merge with existing bookmarks
+        const mergedBookmarks = [...newBookmarks, ...existingBookmarks];
+        
+        // Save to storage
+        await chrome.storage.local.set({ bookmarks: mergedBookmarks });
+        
+        showImportStatus(
+            `✅ Success! Imported ${newBookmarks.length} new bookmarks!\n` +
+            `(${validBookmarks.length - newBookmarks.length} duplicates skipped)`,
+            'success'
+        );
+        
+        // Reload bookmarks display
+        setTimeout(() => {
+            loadBookmarks();
+            closeModal();
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Import error:', error);
+        showImportStatus('❌ Error importing file: ' + error.message, 'error');
+    }
+}
+
+// Import from CSV (placeholder for Day 11)
+async function importFromCSV(file) {
+    showImportStatus('📊 CSV import coming tomorrow (Day 11)!', 'error');
+}
+
+// Show import status message
+function showImportStatus(message, type) {
+    const statusEl = document.getElementById('importStatus');
+    statusEl.textContent = message;
+    statusEl.className = 'import-status ' + type;
+    statusEl.style.display = 'block';
+}
+
+console.log('Popup script loaded successfully with Import Modal!');

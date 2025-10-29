@@ -10,16 +10,24 @@
   <div class="container">
     <!-- Header Section -->
     <header>
-      <h1>📚 Smart Bookmarks</h1>
+      <h1>
+        <span class="logo">🔖</span>
+        Smart Bookmarks
+      </h1>
       <div class="header-actions">
-  <button id="export-btn" title="Export Bookmarks">📥</button>
-  <button id="settings-btn" title="Settings">⚙️</button>
-              <button class="header-btn" id="statsBtn" title="Statistics">
-                <span class="icon">📊</span>
-            </button>
-
-</div>
-
+        <button class="header-btn" id="settingsBtn" title="Settings">
+          <span class="icon">⚙️</span>
+        </button>
+        <button class="header-btn" id="statsBtn" title="Statistics">
+          <span class="icon">📊</span>
+        </button>
+        <button class="header-btn" id="exportBtn" title="Export">
+          <span class="icon">📥</span>
+        </button>
+        <button class="header-btn" id="importBtn" title="Import">
+          <span class="icon">📤</span>
+        </button>
+      </div>
     </header>
     
     <!-- Current Page Info -->
@@ -56,12 +64,6 @@
         <div class="folder-controls">
           <select id="folder-select">
             <option value="default">Default</option>
-            <option value="videos">📹 Videos</option>
-            <option value="stories">📝 Stories</option>
-            <option value="novels">📚 Novels</option>
-            <option value="tutorials">🎓 Tutorials</option>
-            <option value="images">🖼️ Images</option>
-            <option value="audio">🎵 Audio</option>
           </select>
           <button id="add-folder-btn" class="small-btn" title="Create new folder">+</button>
         </div>
@@ -100,8 +102,56 @@
     <div class="stats">
       <p>
         <span id="total-count">0</span> bookmarks saved
-        <span id="plan-badge" class="plan">FREE</span>
       </p>
+    </div>
+  </div>
+
+  <!-- Import Modal -->
+  <div id="importModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📤 Import Bookmarks</h2>
+        <span class="modal-close" id="closeImportModal">&times;</span>
+      </div>
+      
+      <div class="modal-body">
+        <p class="modal-description">
+          Import your bookmarks from JSON or CSV file
+        </p>
+        
+        <div class="import-format-selector">
+          <label class="format-option">
+            <input type="radio" name="importFormat" value="json" checked>
+            <span class="format-label">
+              <span class="format-icon">📄</span>
+              <span class="format-name">JSON Format</span>
+            </span>
+          </label>
+          
+          <label class="format-option">
+            <input type="radio" name="importFormat" value="csv">
+            <span class="format-label">
+              <span class="format-icon">📊</span>
+              <span class="format-name">CSV Format</span>
+            </span>
+          </label>
+        </div>
+        
+        <div class="file-upload-area">
+          <input type="file" id="importFileInput" accept=".json,.csv" hidden>
+          <button class="file-upload-btn" id="selectFileBtn">
+            📁 Select File
+          </button>
+          <p class="file-name" id="selectedFileName">No file selected</p>
+        </div>
+        
+        <div class="import-actions">
+          <button class="btn-secondary" id="cancelImportBtn">Cancel</button>
+          <button class="btn-primary" id="confirmImportBtn" disabled>Import</button>
+        </div>
+        
+        <div class="import-status" id="importStatus" style="display: none;"></div>
+      </div>
     </div>
   </div>
   

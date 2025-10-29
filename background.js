@@ -1,22 +1,20 @@
-// Smart Bookmark Organizer - Background Service Worker (Minimal)
+// Background Service Worker
 console.log('Background service worker started');
 
-// Installation
+// Listen for extension installation
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('Extension installed');
+  console.log('Smart Bookmark Organizer installed!');
+});
+
+// Listen for messages from content scripts or popup
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('Message received in background:', request);
   
-  chrome.storage.local.set({
-    bookmarks: [],
-    folders: [],
-    settings: { autoDetect: true }
-  });
-});
-
-// Tab updates
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.url) {
-    console.log('Tab updated:', changeInfo.url);
+  if (request.action === 'ping') {
+    sendResponse({ status: 'pong' });
   }
+  
+  return true;
 });
 
-console.log('Background worker ready');
+console.log('Background service worker ready');
