@@ -3,76 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Statistics - Smart Bookmark Organizer</title>
+    <title>Statistics</title>
     <link rel="stylesheet" href="stats.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>📊 Statistics Dashboard</h1>
+    <div class="stats-container">
+        <header class="stats-header">
+            <div class="header-left">
+                <h1>📊 Statistics</h1>
+            </div>
             <button id="backBtn" class="back-btn">← Back</button>
         </header>
 
-        <div class="stats-grid">
-            <!-- Total Bookmarks -->
-            <div class="stat-card">
+        <div class="main-stats">
+            <div class="big-stat-card">
                 <div class="stat-icon">📚</div>
-                <div class="stat-number" id="totalBookmarks">0</div>
-                <div class="stat-label">Total Bookmarks</div>
+                <div class="stat-content">
+                    <div class="stat-number" id="totalBookmarks">0</div>
+                    <div class="stat-label">Total Bookmarks</div>
+                </div>
             </div>
 
-            <!-- Video Bookmarks -->
-            <div class="stat-card video">
-                <div class="stat-icon">🎥</div>
-                <div class="stat-number" id="videoCount">0</div>
-                <div class="stat-label">Videos</div>
-            </div>
-
-            <!-- Image Bookmarks -->
-            <div class="stat-card image">
-                <div class="stat-icon">🖼️</div>
-                <div class="stat-number" id="imageCount">0</div>
-                <div class="stat-label">Images</div>
-            </div>
-
-            <!-- Audio Bookmarks -->
-            <div class="stat-card audio">
-                <div class="stat-icon">🎵</div>
-                <div class="stat-number" id="audioCount">0</div>
-                <div class="stat-label">Audio</div>
-            </div>
-
-            <!-- Text Bookmarks -->
-            <div class="stat-card text">
-                <div class="stat-icon">📝</div>
-                <div class="stat-number" id="textCount">0</div>
-                <div class="stat-label">Text</div>
-            </div>
-
-            <!-- Folders -->
-            <div class="stat-card folders">
+            <div class="big-stat-card">
                 <div class="stat-icon">📁</div>
-                <div class="stat-number" id="folderCount">0</div>
-                <div class="stat-label">Folders</div>
+                <div class="stat-content">
+                    <div class="stat-number" id="folderCount">0</div>
+                    <div class="stat-label">Folders</div>
+                </div>
+            </div>
+
+            <div class="big-stat-card">
+                <div class="stat-icon">🏷️</div>
+                <div class="stat-content">
+                    <div class="stat-number" id="tagCount">0</div>
+                    <div class="stat-label">Tags</div>
+                </div>
             </div>
         </div>
 
-        <!-- Platform Breakdown -->
-        <div class="section">
-            <h2>🌐 Platform Breakdown</h2>
-            <div id="platformList" class="platform-list"></div>
+        <div class="section-card">
+            <h2 class="section-title">📂 Categories</h2>
+            <div class="category-stats">
+                <div class="cat-card">
+                    <div class="cat-icon">🎥</div>
+                    <div class="cat-number" id="videoCount">0</div>
+                    <div class="cat-name">Videos</div>
+                </div>
+                
+                <div class="cat-card">
+                    <div class="cat-icon">🖼️</div>
+                    <div class="cat-number" id="imageCount">0</div>
+                    <div class="cat-name">Images</div>
+                </div>
+                
+                <div class="cat-card">
+                    <div class="cat-icon">🎵</div>
+                    <div class="cat-number" id="audioCount">0</div>
+                    <div class="cat-name">Audio</div>
+                </div>
+                
+                <div class="cat-card">
+                    <div class="cat-icon">📝</div>
+                    <div class="cat-number" id="textCount">0</div>
+                    <div class="cat-name">Text</div>
+                </div>
+            </div>
         </div>
 
-        <!-- Top Tags -->
-        <div class="section">
-            <h2>🏷️ Most Used Tags</h2>
-            <div id="tagList" class="tag-list"></div>
+        <div class="two-column">
+            <div class="section-card">
+                <h2 class="section-title">🌐 Platforms</h2>
+                <div id="platformList"></div>
+            </div>
+
+            <div class="section-card">
+                <h2 class="section-title">🏷️ Tags</h2>
+                <div id="tagList"></div>
+            </div>
         </div>
 
-        <!-- Recent Activity -->
-        <div class="section">
-            <h2>📅 Recent Activity</h2>
-            <div id="activityChart" class="activity-chart"></div>
+        <div class="section-card">
+            <h2 class="section-title">📅 Activity</h2>
+            <div id="activityChart"></div>
         </div>
     </div>
 

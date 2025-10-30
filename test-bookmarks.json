@@ -1,26 +1,5 @@
-[
-  {
-    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    "title": "Rick Astley - Never Gonna Give You Up",
-    "category": "video",
-    "platform": "YouTube",
-    "folder": "default",
-    "tags": ["music", "classic"]
-  },
-  {
-    "url": "https://www.instagram.com/p/test123/",
-    "title": "Beautiful Sunset Photo",
-    "category": "image",
-    "platform": "Instagram",
-    "folder": "default",
-    "tags": ["nature", "photography"]
-  },
-  {
-    "url": "https://github.com/",
-    "title": "GitHub Homepage",
-    "category": "text",
-    "platform": "Web",
-    "folder": "default",
-    "tags": ["coding", "development"]
-  }
-]
+Title,URL,Category,Platform,Folder,Tags
+"Learn Python","https://www.youtube.com/watch?v=python101","video","YouTube","default","python;learning"
+"Beautiful Nature","https://unsplash.com/photos/nature","image","Unsplash","default","photography;nature"
+"Web Development Tips","https://medium.com/web-dev","text","Medium","Learning","coding;tips"
+"Lofi Music","https://open.spotify.com/playlist/lofi","audio","Spotify","Music","relaxation;study"

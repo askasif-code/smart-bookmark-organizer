@@ -28,9 +28,24 @@ async function loadStatistics() {
         document.getElementById('audioCount').textContent = audioCount;
         document.getElementById('textCount').textContent = textCount;
 
+        // Calculate percentages for progress bars
+        if (totalBookmarks > 0) {
+            document.querySelector('.video-progress').style.width = ((videoCount / totalBookmarks) * 100) + '%';
+            document.querySelector('.image-progress').style.width = ((imageCount / totalBookmarks) * 100) + '%';
+            document.querySelector('.audio-progress').style.width = ((audioCount / totalBookmarks) * 100) + '%';
+            document.querySelector('.text-progress').style.width = ((textCount / totalBookmarks) * 100) + '%';
+        }
+
         // Calculate folder count (including default)
         const folderCount = folders.length + 1; // +1 for default folder
         document.getElementById('folderCount').textContent = folderCount;
+
+        // Calculate unique tags count
+        const allTags = new Set();
+        bookmarks.forEach(bm => {
+            if (bm.tags) bm.tags.forEach(tag => allTags.add(tag));
+        });
+        document.getElementById('tagCount').textContent = allTags.size;
 
         // Display platform breakdown
         displayPlatformBreakdown(bookmarks);
@@ -60,11 +75,11 @@ function displayPlatformBreakdown(bookmarks) {
     // Sort platforms by count (highest first)
     const sortedPlatforms = Object.entries(platformCounts)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 10); // Top 10 platforms
+        .slice(0, 8); // Top 8 platforms
 
     // Display platforms
     if (sortedPlatforms.length === 0) {
-        platformList.innerHTML = '<div class="empty-state">No platforms yet. Start saving bookmarks! 📌</div>';
+        platformList.innerHTML = '<div class="empty-state">No platforms yet 📌</div>';
         return;
     }
 
@@ -114,7 +129,7 @@ function displayRecentActivity(bookmarks) {
     const activityChart = document.getElementById('activityChart');
     
     if (bookmarks.length === 0) {
-        activityChart.innerHTML = '<div class="empty-state">No activity yet. Start saving bookmarks! 📊</div>';
+        activityChart.innerHTML = '<div class="empty-state">No activity yet 📊</div>';
         return;
     }
 
@@ -150,8 +165,8 @@ function displayRecentActivity(bookmarks) {
         return `
             <div class="activity-day">
                 <span class="activity-date">${day.label}</span>
-                <div class="activity-bar">
-                    <div class="activity-fill" style="width: ${percentage}%"></div>
+                <div class="activity-bar-container">
+                    <div class="activity-bar-fill" style="width: ${percentage}%"></div>
                 </div>
                 <span class="activity-count">${day.count}</span>
             </div>

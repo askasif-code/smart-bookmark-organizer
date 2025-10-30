@@ -235,12 +235,15 @@ function loadBookmarks() {
     const recent = bookmarks.slice(0, 5);
     
     listContainer.innerHTML = recent.map(bm => `
-      <div class="bookmark-item" data-url="${bm.url}" title="Click to open">
-        <div class="bookmark-icon">${getCategoryIcon(bm.category)}</div>
-        <div class="bookmark-info">
-          <div class="bookmark-title">${escapeHtml(bm.title)}</div>
-          <div class="bookmark-meta">${bm.platform} • ${getTimeAgo(bm.timestamp)} • ${bm.folder}</div>
+      <div class="bookmark-item" data-url="${bm.url}">
+        <div class="bookmark-content" title="Click to open">
+          <div class="bookmark-icon">${getCategoryIcon(bm.category)}</div>
+          <div class="bookmark-info">
+            <div class="bookmark-title">${escapeHtml(bm.title)}</div>
+            <div class="bookmark-meta">${bm.platform} • ${getTimeAgo(bm.timestamp)} • ${bm.folder}</div>          
+          </div>
         </div>
+        <button class="delete-btn" data-id="${bm.id}" title="Delete bookmark">🗑️</button>
       </div>
     `).join('');
     
@@ -250,7 +253,15 @@ function loadBookmarks() {
         chrome.tabs.create({ url: this.dataset.url });
       });
     });
-    
+       // Add delete button listeners
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation(); // Prevent opening bookmark
+        const bookmarkId = this.dataset.id;
+        deleteBookmark(bookmarkId);
+      });
+    });
+ 
     console.log('Loaded ' + bookmarks.length + ' bookmarks');
   });
 }
@@ -564,9 +575,54 @@ async function importFromJSON(file) {
     }
 }
 
-// Import from CSV (placeholder for Day 11)
+// Import from CSV - DAY 11 FUNCTIONALITY
 async function importFromCSV(file) {
-    showImportStatus('📊 CSV import coming tomorrow (Day 11)!', 'error');
+    try {
+        showImportStatus('Reading CSV file...', 'info');
+        
+        const text = await file.text();
+        const bookmarks = parseCSVFile(text);
+        
+        if (bookmarks.length === 0) {
+            showImportStatus('❌ No valid bookmarks found in CSV!', 'error');
+            return;
+        }
+        
+        // Get existing bookmarks
+        const result = await chrome.storage.local.get(['bookmarks']);
+        const existingBookmarks = result.bookmarks || [];
+        
+        // Check for duplicates
+        const existingUrls = new Set(existingBookmarks.map(bm => bm.url));
+        const newBookmarks = bookmarks.filter(bm => !existingUrls.has(bm.url));
+        
+        if (newBookmarks.length === 0) {
+            showImportStatus('⚠️ All bookmarks already exist! No new bookmarks imported.', 'error');
+            return;
+        }
+        
+        // Merge with existing bookmarks
+        const mergedBookmarks = [...newBookmarks, ...existingBookmarks];
+        
+        // Save to storage
+        await chrome.storage.local.set({ bookmarks: mergedBookmarks });
+        
+        showImportStatus(
+            `✅ Success! Imported ${newBookmarks.length} bookmarks from CSV!\n` +
+            `(${bookmarks.length - newBookmarks.length} duplicates skipped)`,
+            'success'
+        );
+        
+        // Reload bookmarks display
+        setTimeout(() => {
+            loadBookmarks();
+            closeModal();
+        }, 2000);
+        
+    } catch (error) {
+        console.error('CSV Import error:', error);
+        showImportStatus('❌ Error importing CSV: ' + error.message, 'error');
+    }
 }
 
 // Show import status message
@@ -577,4 +633,119 @@ function showImportStatus(message, type) {
     statusEl.style.display = 'block';
 }
 
-console.log('Popup script loaded successfully with Import Modal!');
+// Delete individual bookmark
+function deleteBookmark(bookmarkId) {
+  if (!confirm('Are you sure you want to delete this bookmark?')) {
+    return;
+  }
+  
+  chrome.storage.local.get(['bookmarks'], function(result) {
+    const bookmarks = result.bookmarks || [];
+    const filtered = bookmarks.filter(bm => bm.id !== bookmarkId);
+    
+    chrome.storage.local.set({ bookmarks: filtered }, function() {
+      console.log('Bookmark deleted:', bookmarkId);
+      alert('✅ Bookmark deleted!');
+      loadBookmarks();
+    });
+  });
+}
+
+// ========================================
+// CSV PARSER FUNCTIONS (DAY 11)
+// ========================================
+
+// CSV Parser Function
+function parseCSVFile(csvText) {
+  console.log("CSV parsing shuru...");
+  
+  try {
+    const lines = csvText.trim().split('\n');
+    
+    if (lines.length < 2) {
+      console.error("CSV file khali hai!");
+      return [];
+    }
+    
+    // Headers ko parse karo
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    console.log("Headers:", headers);
+    
+    const bookmarks = [];
+    
+    // Har line ko process karo
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue; // Empty lines skip karo
+      
+      // CSV columns ko parse karo (commas se, but quotes ko respect karo)
+      const values = parseCSVLine(line);
+      
+      if (values.length < 2) continue; // URL aur Title zaroori hain
+      
+      // Headers aur values ko map karo
+      const row = {};
+      headers.forEach((header, index) => {
+        row[header] = values[index] || '';
+      });
+      
+      // Bookmark object banao
+      const bookmark = {
+        id: "bm-" + Date.now() + Math.random(),
+        url: row['url'] || row['link'] || '',
+        title: row['title'] || row['name'] || 'Untitled',
+        category: row['category'] || detectCategory(row['url']),
+        platform: row['platform'] || getPlatform(row['url']),
+        folder: row['folder'] || 'default',
+        tags: row['tags'] ? row['tags'].split(';').map(t => t.trim()).filter(t => t) : [],
+        timestamp: Date.now(),
+        favicon: '',
+        metadata: {}
+      };
+      
+      // Valid URL check karo
+      if (bookmark.url && (bookmark.url.startsWith('http://') || bookmark.url.startsWith('https://'))) {
+        bookmarks.push(bookmark);
+        console.log("Bookmark added:", bookmark.title);
+      }
+    }
+    
+    console.log("Total bookmarks parsed:", bookmarks.length);
+    return bookmarks;
+    
+  } catch (error) {
+    console.error("CSV parsing error:", error);
+    return [];
+  }
+}
+
+// Helper function: CSV line ko parse karo (quotes ko handle karta hai)
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let insideQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+    
+    if (char === '"') {
+      if (insideQuotes && nextChar === '"') {
+        current += '"';
+        i++;
+      } else {
+        insideQuotes = !insideQuotes;
+      }
+    } else if (char === ',' && !insideQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  
+  result.push(current.trim());
+  return result;
+}
+
+console.log('Popup script loaded successfully with CSV Import!');

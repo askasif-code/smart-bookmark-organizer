@@ -215,18 +215,46 @@ select:focus, input:focus {
 
 .bookmark-item {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 10px;
   padding: 10px;
   background: #f8f9fa;
   border-radius: 6px;
   margin-bottom: 8px;
-  cursor: pointer;
   transition: background 0.2s;
+}
+
+.bookmark-content {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
 }
 
 .bookmark-item:hover {
   background: #e9ecef;
 }
+
+.delete-btn {
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.delete-btn:hover {
+  background: #ff5252;
+  transform: scale(1.1);
+}
+
 
 .bookmark-icon {
   font-size: 20px;
