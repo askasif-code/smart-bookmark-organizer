@@ -1,10 +1,11 @@
-// Smart Bookmark Organizer - Popup Script (ENHANCED WITH METADATA + IMPORT)
+// Smart Bookmark Organizer - Popup Script (ENHANCED WITH METADATA + IMPORT + BULK)
 console.log('Popup script loading...');
 
 // Wait for DOM
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM loaded');
   init();
+  setupBulkSelection();
 });
 
 // Initialize
@@ -249,14 +250,18 @@ function loadBookmarks() {
     
     // Add click listeners
     document.querySelectorAll('.bookmark-item').forEach(item => {
-      item.addEventListener('click', function() {
-        chrome.tabs.create({ url: this.dataset.url });
+      item.addEventListener('click', function(e) {
+        // Don't open if clicking delete button
+        if (!e.target.classList.contains('delete-btn')) {
+          chrome.tabs.create({ url: this.dataset.url });
+        }
       });
     });
-       // Add delete button listeners
+    
+    // Add delete button listeners
     document.querySelectorAll('.delete-btn').forEach(btn => {
       btn.addEventListener('click', function(e) {
-        e.stopPropagation(); // Prevent opening bookmark
+        e.stopPropagation();
         const bookmarkId = this.dataset.id;
         deleteBookmark(bookmarkId);
       });
@@ -575,7 +580,7 @@ async function importFromJSON(file) {
     }
 }
 
-// Import from CSV - DAY 11 FUNCTIONALITY
+// Import from CSV
 async function importFromCSV(file) {
     try {
         showImportStatus('Reading CSV file...', 'info');
@@ -652,10 +657,8 @@ function deleteBookmark(bookmarkId) {
 }
 
 // ========================================
-// CSV PARSER FUNCTIONS (DAY 11)
+// CSV PARSER FUNCTIONS
 // ========================================
-
-// CSV Parser Function
 function parseCSVFile(csvText) {
   console.log("CSV parsing shuru...");
   
@@ -676,12 +679,12 @@ function parseCSVFile(csvText) {
     // Har line ko process karo
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
-      if (!line) continue; // Empty lines skip karo
+      if (!line) continue;
       
-      // CSV columns ko parse karo (commas se, but quotes ko respect karo)
+      // CSV columns ko parse karo
       const values = parseCSVLine(line);
       
-      if (values.length < 2) continue; // URL aur Title zaroori hain
+      if (values.length < 2) continue;
       
       // Headers aur values ko map karo
       const row = {};
@@ -719,7 +722,7 @@ function parseCSVFile(csvText) {
   }
 }
 
-// Helper function: CSV line ko parse karo (quotes ko handle karta hai)
+// Helper function: CSV line ko parse karo
 function parseCSVLine(line) {
   const result = [];
   let current = '';
@@ -748,4 +751,274 @@ function parseCSVLine(line) {
   return result;
 }
 
-console.log('Popup script loaded successfully with CSV Import!');
+// ========================================
+// BULK SELECTION FUNCTIONALITY (DAY 12)
+// ========================================
+
+let bulkModeActive = false;
+let selectedBookmarks = new Set();
+
+function setupBulkSelection() {
+    const bulkModeToggle = document.getElementById('bulkModeToggle');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const deselectAllBtn = document.getElementById('deselectAllBtn');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const bulkMoveBtn = document.getElementById('bulkMoveBtn');
+
+    // Toggle bulk mode
+    if (bulkModeToggle) {
+        bulkModeToggle.addEventListener('click', toggleBulkMode);
+    }
+
+    // Select all bookmarks
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', selectAllBookmarks);
+    }
+
+    // Deselect all bookmarks
+    if (deselectAllBtn) {
+        deselectAllBtn.addEventListener('click', deselectAllBookmarks);
+    }
+
+    // Bulk delete
+    if (bulkDeleteBtn) {
+        bulkDeleteBtn.addEventListener('click', bulkDeleteBookmarks);
+    }
+
+    // Bulk move
+    if (bulkMoveBtn) {
+        bulkMoveBtn.addEventListener('click', bulkMoveBookmarks);
+    }
+}
+
+// Toggle bulk selection mode
+function toggleBulkMode() {
+    bulkModeActive = !bulkModeActive;
+    const bulkModeToggle = document.getElementById('bulkModeToggle');
+    const bulkControls = document.getElementById('bulkControls');
+    const bookmarksList = document.getElementById('bookmarks-list');
+
+    if (bulkModeActive) {
+        // Activate bulk mode
+        bulkModeToggle.classList.add('active');
+        bulkModeToggle.innerHTML = '✓ Bulk Mode ON';
+        bulkControls.style.display = 'block';
+        bookmarksList.classList.add('bulk-mode-active');
+        
+        // Add checkboxes to all bookmarks
+        addCheckboxesToBookmarks();
+    } else {
+        // Deactivate bulk mode
+        bulkModeToggle.classList.remove('active');
+        bulkModeToggle.innerHTML = '☑️ Bulk Select Mode';
+        bulkControls.style.display = 'none';
+        bookmarksList.classList.remove('bulk-mode-active');
+        
+        // Clear selection
+        selectedBookmarks.clear();
+        removeCheckboxesFromBookmarks();
+        updateSelectedCount();
+    }
+}
+
+// Add checkboxes to all bookmark items
+function addCheckboxesToBookmarks() {
+    const bookmarkItems = document.querySelectorAll('.bookmark-item');
+    
+    bookmarkItems.forEach((item, index) => {
+        // Check if checkbox already exists
+        if (!item.querySelector('.bookmark-checkbox')) {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'bookmark-checkbox';
+            checkbox.dataset.index = index;
+            
+           // Add change event listener
+            checkbox.addEventListener('change', function(e) {
+                e.stopPropagation(); // Prevent opening bookmark
+                handleCheckboxChange(index, this.checked);
+            });
+            
+            // Prevent click from opening bookmark
+            checkbox.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            
+            // Insert checkbox at the beginning
+            item.insertBefore(checkbox, item.firstChild);
+        }
+    });
+}
+
+// Remove checkboxes from bookmarks
+function removeCheckboxesFromBookmarks() {
+    const checkboxes = document.querySelectorAll('.bookmark-checkbox');
+    checkboxes.forEach(checkbox => checkbox.remove());
+    
+    // Remove selected class
+    const bookmarkItems = document.querySelectorAll('.bookmark-item');
+    bookmarkItems.forEach(item => item.classList.remove('selected'));
+}
+
+// Handle checkbox change
+function handleCheckboxChange(index, isChecked) {
+    const bookmarkItems = document.querySelectorAll('.bookmark-item');
+    const item = bookmarkItems[index];
+    
+    if (isChecked) {
+        selectedBookmarks.add(index);
+        item.classList.add('selected');
+    } else {
+        selectedBookmarks.delete(index);
+        item.classList.remove('selected');
+    }
+    
+    updateSelectedCount();
+}
+
+// Select all bookmarks
+function selectAllBookmarks() {
+    const checkboxes = document.querySelectorAll('.bookmark-checkbox');
+    const bookmarkItems = document.querySelectorAll('.bookmark-item');
+    
+    selectedBookmarks.clear();
+    
+    checkboxes.forEach((checkbox, index) => {
+        checkbox.checked = true;
+        selectedBookmarks.add(index);
+        bookmarkItems[index].classList.add('selected');
+    });
+    
+    updateSelectedCount();
+}
+
+// Deselect all bookmarks
+function deselectAllBookmarks() {
+    const checkboxes = document.querySelectorAll('.bookmark-checkbox');
+    const bookmarkItems = document.querySelectorAll('.bookmark-item');
+    
+    checkboxes.forEach((checkbox, index) => {
+        checkbox.checked = false;
+        bookmarkItems[index].classList.remove('selected');
+    });
+    
+    selectedBookmarks.clear();
+    updateSelectedCount();
+}
+
+// Update selected count display
+function updateSelectedCount() {
+    const selectedCountElement = document.getElementById('selectedCount');
+    if (selectedCountElement) {
+        selectedCountElement.textContent = `Selected: ${selectedBookmarks.size}`;
+    }
+}
+
+// Bulk delete bookmarks
+function bulkDeleteBookmarks() {
+    if (selectedBookmarks.size === 0) {
+        alert('Please select bookmarks to delete!');
+        return;
+    }
+    
+    const confirmDelete = confirm(`Are you sure you want to delete ${selectedBookmarks.size} bookmark(s)?`);
+    
+    if (!confirmDelete) {
+        return;
+    }
+    
+    chrome.storage.local.get(['bookmarks'], function(result) {
+        let bookmarks = result.bookmarks || [];
+        
+        // Get currently displayed bookmarks (first 5)
+        const displayedBookmarks = bookmarks.slice(0, 5);
+        
+        // Get IDs of selected bookmarks
+        const selectedIds = Array.from(selectedBookmarks).map(index => {
+            return displayedBookmarks[index] ? displayedBookmarks[index].id : null;
+        }).filter(id => id !== null);
+        
+        // Filter out selected bookmarks
+        bookmarks = bookmarks.filter(bm => !selectedIds.includes(bm.id));
+        
+        // Save updated bookmarks
+        chrome.storage.local.set({ bookmarks: bookmarks }, function() {
+            selectedBookmarks.clear();
+            loadBookmarks();
+            updateSelectedCount();
+            alert(`✅ Deleted ${selectedIds.length} bookmark(s) successfully!`);
+        });
+    });
+}
+
+// Bulk move bookmarks to folder
+function bulkMoveBookmarks() {
+    if (selectedBookmarks.size === 0) {
+        alert('Please select bookmarks to move!');
+        return;
+    }
+    
+    // Get available folders
+    chrome.storage.local.get(['folders'], function(result) {
+        const folders = result.folders || [];
+        
+        if (folders.length === 0) {
+            alert('No custom folders available! Please create a folder first.');
+            return;
+        }
+        
+        // Create folder selection prompt
+        let folderOptions = 'Select folder:\n\n0. Default\n';
+        folders.forEach((folder, index) => {
+            folderOptions += `${index + 1}. ${folder.emoji} ${folder.name}\n`;
+        });
+        
+        const folderChoice = prompt(folderOptions + '\nEnter folder number:');
+        
+        if (!folderChoice) {
+            return;
+        }
+        
+        const folderIndex = parseInt(folderChoice);
+        let targetFolder;
+        
+        if (folderIndex === 0) {
+            targetFolder = 'default';
+        } else if (folderIndex > 0 && folderIndex <= folders.length) {
+            targetFolder = folders[folderIndex - 1].id;
+        } else {
+            alert('Invalid folder selection!');
+            return;
+        }
+        
+        // Move bookmarks
+        chrome.storage.local.get(['bookmarks'], function(result) {
+            let bookmarks = result.bookmarks || [];
+            
+            // Get currently displayed bookmarks (first 5)
+            const displayedBookmarks = bookmarks.slice(0, 5);
+            
+            // Get IDs of selected bookmarks
+            const selectedIds = Array.from(selectedBookmarks).map(index => {
+                return displayedBookmarks[index] ? displayedBookmarks[index].id : null;
+            }).filter(id => id !== null);
+            
+            // Update folder for selected bookmarks
+            bookmarks.forEach(bm => {
+                if (selectedIds.includes(bm.id)) {
+                    bm.folder = targetFolder;
+                }
+            });
+            
+            // Save updated bookmarks
+            chrome.storage.local.set({ bookmarks: bookmarks }, function() {
+                selectedBookmarks.clear();
+                loadBookmarks();
+                updateSelectedCount();
+                alert(`✅ Moved ${selectedIds.length} bookmark(s) successfully!`);
+            });
+        });
+    });
+}
+
+console.log('Popup script loaded successfully with Bulk Selection!');

@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
   <div class="container">
     <!-- Header Section -->
     <header>
@@ -89,7 +90,12 @@
         placeholder="🔍 Search bookmarks..."
       >
     </div>
-    
+    <!-- Bulk Mode Toggle -->
+        <div class="bulk-toggle-container">
+            <button class="bulk-mode-toggle" id="bulkModeToggle">
+                ☑️ Bulk Select Mode
+            </button>
+        </div>
     <!-- Recent Bookmarks -->
     <div class="recent-bookmarks">
       <h3>Recent Bookmarks</h3>
@@ -97,6 +103,28 @@
         <p class="empty-state">No bookmarks yet. Save your first one! 🎉</p>
       </div>
     </div>
+    <!-- Bulk Selection Controls -->
+        <div class="bulk-controls" id="bulkControls" style="display: none;">
+            <div class="bulk-actions-top">
+                <button class="bulk-btn select-all-btn" id="selectAllBtn">
+                    ✓ Select All
+                </button>
+                <button class="bulk-btn deselect-all-btn" id="deselectAllBtn">
+                    ✗ Clear
+                </button>
+                <span class="selected-count" id="selectedCount">Selected: 0</span>
+            </div>
+            <div class="bulk-actions-bottom">
+                <button class="bulk-action-btn delete-btn" id="bulkDeleteBtn">
+                    🗑️ Delete Selected
+                </button>
+                <button class="bulk-action-btn move-btn" id="bulkMoveBtn">
+                    📁 Move to Folder
+                </button>
+            </div>
+        </div>
+
+
     
     <!-- Stats Footer -->
     <div class="stats">
